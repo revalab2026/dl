@@ -1,0 +1,70 @@
+exp 11
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+import matplotlib.pyplot as plt
+
+url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv"
+data = pd.read_csv(url)
+
+values = data['Temp'].values.reshape(-1, 1)
+
+scaler = MinMaxScaler()
+scaled_data = scaler.fit_transform(values)
+
+def create_sequences(data, time_steps=10):
+    X, y = [], []
+    for i in range(len(data) - time_steps):
+        X.append(data[i:i+time_steps])
+        y.append(data[i+time_steps])
+    return np.array(X), np.array(y)
+
+time_steps = 10
+X, y = create_sequences(scaled_data, time_steps)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, shuffle=False
+)
+
+model = Sequential([
+    LSTM(50, activation='relu', input_shape=(time_steps, 1)),
+    Dense(1)
+])
+
+model.compile(optimizer='adam', loss='mse')
+
+model.fit(X_train, y_train, epochs=20, batch_size=32)
+
+loss = model.evaluate(X_test, y_test)
+print("Test MSE:", loss)
+
+predictions = model.predict(X_test)
+
+predictions = scaler.inverse_transform(predictions)
+y_test_actual = scaler.inverse_transform(y_test)
+
+plt.plot(y_test_actual)
+plt.plot(predictions)
+plt.legend(["Actual", "Predicted"])
+plt.show()
+
+print("Enter last 10 temperature values (space-separated):")
+user_input = input()
+
+user_values = list(map(float, user_input.split()))
+
+if len(user_values) == 10:
+    user_array = np.array(user_values).reshape(-1, 1)
+    user_scaled = scaler.transform(user_array)
+    user_scaled = user_scaled.reshape(1, 10, 1)
+    predicted_scaled = model.predict(user_scaled)
+    predicted_temp = scaler.inverse_transform(predicted_scaled)
+    print(f"Predicted next day temperature: {predicted_temp[0][0]:.2f}")
+else:
+    print("Please enter exactly 10 values.")
+
+
+

@@ -1,0 +1,51 @@
+exp 1
+import numpy as np
+
+class Perceptron:
+    def __init__(self, input_size, learning_rate=0.1):
+        # Initialize weights (including bias)
+        self.weights = np.zeros(input_size + 1)
+        self.lr = learning_rate
+
+    def activation(self, x):
+        # Step activation function
+        return 1 if x >= 0 else 0
+
+    def predict(self, x):
+        # Add bias input (1)
+        x = np.insert(x, 0, 1)
+        # Weighted sum + activation
+        return self.activation(np.dot(self.weights, x))
+
+    def train(self, training_inputs, labels, epochs=10):
+        for _ in range(epochs):
+            for x, y in zip(training_inputs, labels):
+                x = np.insert(x, 0, 1)
+                prediction = self.activation(np.dot(self.weights, x))
+                # Update weights using perceptron learning rule
+                self.weights += self.lr * (y - prediction) * x
+
+
+# Input dataset
+inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+
+# AND Gate
+and_labels = np.array([0, 0, 0, 1])
+print("Training Perceptron for AND Gate")
+and_gate = Perceptron(2)
+and_gate.train(inputs, and_labels)
+
+for i in inputs:
+    print(f"Input: {i}, Output: {and_gate.predict(i)}")
+
+
+# OR Gate
+or_labels = np.array([0, 1, 1, 1])
+print("\nTraining Perceptron for OR Gate")
+or_gate = Perceptron(2)
+or_gate.train(inputs, or_labels)
+
+for i in inputs:
+    print(f"Input: {i}, Output: {or_gate.predict(i)}")
+
+
